@@ -125,14 +125,12 @@ audio.addEventListener('timeupdate',()=>{ tick(); const d=audio.duration||0;
   time.textContent=fmt(audio.currentTime)+' / '+fmt(d); });
 
 const play=document.getElementById('play'), time=document.getElementById('time');
-function resume(){ audio.currentTime=Math.max(0,audio.currentTime-1.5); audio.play(); }
-function toggle(){ audio.paused?resume():audio.pause(); }
-play.onclick=toggle;
+play.onclick=()=>{ audio.paused?audio.play():audio.pause(); };
 audio.onplay=()=>play.textContent='⏸'; audio.onpause=()=>play.textContent='▶';
 document.addEventListener('keydown',e=>{
   if(e.code!=='Space') return;
   const t=e.target.tagName; if(t==='SELECT'||t==='INPUT'||t==='BUTTON') return;
-  e.preventDefault(); toggle();
+  e.preventDefault(); audio.paused?audio.play():audio.pause();
 });
 
 const speeds=[0.75,1.0,1.25,1.5], spd=document.getElementById('spd'); let si=1;
