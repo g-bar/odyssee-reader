@@ -76,8 +76,10 @@ function ipaHtml(s){ return s.split(' | ').map(x=>x.trim()).join(' <span class="
 
 D.forEach((bk,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=bk.n+' · '+bk.title; bookSel.appendChild(o); });
 
+// Tapping a verse pauses while playing; when paused it plays from the tapped verse.
 // Safari ignores currentTime set before the file's metadata has loaded.
-function playAt(t){
+function tapAt(t){
+  if(!audio.paused){ audio.pause(); return; }
   const go=()=>{ audio.currentTime=t; audio.play(); };
   audio.readyState>=1 ? go() : audio.addEventListener('loadedmetadata',go,{once:true});
 }
@@ -88,7 +90,7 @@ function renderBook(i){
   audio.src='sync/audio/book'+String(bk.n).padStart(2,'0')+'.m4a';
   const h=document.createElement('div'); h.className='bookhead';
   h.innerHTML='<h1>'+bk.n+' · '+esc(bk.title)+'</h1><p>'+esc(bk.sub)+'</p>'; main.appendChild(h);
-  h.onclick=()=>playAt(bk.head[0]); flat.push({el:h,b:bk.head[0],e:bk.head[1]});
+  h.onclick=()=>tapAt(bk.head[0]); flat.push({el:h,b:bk.head[0],e:bk.head[1]});
   bk.verses.forEach((v,idx)=>{
     const [de,ipa,en,tb,te]=v, n=idx+1;
     const d=document.createElement('div'); d.className='v'+(tb==null?' noaudio':'');
@@ -96,7 +98,7 @@ function renderBook(i){
     d.innerHTML='<span class="num">'+mark+'</span><div class="de">'+esc(de)+'</div>'+
       (ipa?'<div class="ipa">['+ipaHtml(esc(ipa))+']</div>':'')+
       (en?'<div class="en">'+esc(en)+'</div>':'');
-    if(tb!=null){ d.onclick=()=>playAt(tb); flat.push({el:d,b:tb,e:te}); }
+    if(tb!=null){ d.onclick=()=>tapAt(tb); flat.push({el:d,b:tb,e:te}); }
     main.appendChild(d); verseEls[n]=d;
   });
   window.scrollTo(0,0);
