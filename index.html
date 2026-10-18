@@ -38,12 +38,12 @@
   .v.noaudio .num { color:var(--accent); }
   body.hideipa .ipa, body.hideen .en { display:none; }
   footer { position:fixed; left:0; right:0; bottom:0; z-index:6; background:var(--card);
-    border-top:1px solid rgba(128,128,128,.3); padding:8px 12px calc(8px + env(safe-area-inset-bottom));
-    display:flex; align-items:center; gap:10px; }
-  footer button.play { font-size:20px; width:48px; height:48px; border-radius:50%; }
-  #seek { flex:1; }
-  #time { font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; min-width:92px; text-align:right; }
-  .spd { font-size:13px; min-width:46px; }
+    border-top:1px solid rgba(128,128,128,.3); padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+    display:grid; grid-template-columns:1fr auto 1fr; align-items:center; }
+  footer button.play { grid-column:2; justify-self:center; font-size:34px; width:72px; height:72px;
+    border-radius:50%; display:flex; align-items:center; justify-content:center; line-height:1; }
+  #time { grid-column:1; font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .spd { grid-column:3; justify-self:end; font-size:13px; min-width:46px; }
 </style>
 </head>
 <body>
@@ -60,9 +60,8 @@
 </header>
 <main id="main"></main>
 <footer>
-  <button class="play" id="play">▶</button>
-  <input type="range" id="seek" min="0" max="1000" value="0">
   <span id="time">0:00 / 0:00</span>
+  <button class="play" id="play">▶</button>
   <button class="spd" id="spd">1.0×</button>
 </footer>
 <audio id="audio" preload="metadata"></audio>
@@ -123,9 +122,9 @@ function tick(){
   }
 }
 audio.addEventListener('timeupdate',()=>{ tick(); const d=audio.duration||0;
-  seek.value=d?audio.currentTime/d*1000:0; time.textContent=fmt(audio.currentTime)+' / '+fmt(d); });
+  time.textContent=fmt(audio.currentTime)+' / '+fmt(d); });
 
-const play=document.getElementById('play'), seek=document.getElementById('seek'), time=document.getElementById('time');
+const play=document.getElementById('play'), time=document.getElementById('time');
 play.onclick=()=>{ audio.paused?audio.play():audio.pause(); };
 audio.onplay=()=>play.textContent='⏸'; audio.onpause=()=>play.textContent='▶';
 document.addEventListener('keydown',e=>{
@@ -133,7 +132,6 @@ document.addEventListener('keydown',e=>{
   const t=e.target.tagName; if(t==='SELECT'||t==='INPUT'||t==='BUTTON') return;
   e.preventDefault(); audio.paused?audio.play():audio.pause();
 });
-seek.oninput=()=>{ if(audio.duration) audio.currentTime=seek.value/1000*audio.duration; };
 
 const speeds=[0.75,1.0,1.25,1.5], spd=document.getElementById('spd'); let si=1;
 spd.onclick=()=>{ si=(si+1)%speeds.length; audio.playbackRate=speeds[si]; spd.textContent=speeds[si].toFixed(2).replace(/0$/,'')+'×'; };
