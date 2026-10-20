@@ -1,0 +1,12 @@
+# Only the deployed site is tracked here (index.html, odyssee_data.js, sync/audio/*.m4a,
+# .nojekyll). Everything else is source/dev material needed to rebuild it, kept on disk
+# but not committed.
+*
+
+!/.gitignore
+!/index.html
+!/odyssee_data.js
+!/.nojekyll
+!/sync
+!/sync/audio
+!/sync/audio/*.m4a
