@@ -84,28 +84,30 @@ function tapAt(t){
   audio.readyState>=1 ? go() : audio.addEventListener('loadedmetadata',go,{once:true});
 }
 
+function setHash(id){ history.replaceState(null,'','#'+id); }
+
 function renderBook(i){
   curBook=i; main.innerHTML=''; verseEls=[]; flat=[];
   const bk=D[i];
   audio.src='sync/audio/book'+String(bk.n).padStart(2,'0')+'.m4a';
-  const h=document.createElement('div'); h.className='bookhead';
+  const h=document.createElement('div'); h.className='bookhead'; h.id='b'+bk.n+'-v0';
   h.innerHTML='<h1>'+bk.n+' · '+esc(bk.title)+'</h1><p>'+esc(bk.sub)+'</p>'; main.appendChild(h);
-  h.onclick=()=>tapAt(bk.head[0]); flat.push({el:h,b:bk.head[0],e:bk.head[1]});
+  h.onclick=()=>{ tapAt(bk.head[0]); setHash(h.id); }; flat.push({el:h,b:bk.head[0],e:bk.head[1]});
   bk.verses.forEach((v,idx)=>{
     const [de,ipa,en,tb,te]=v, n=idx+1;
     const d=document.createElement('div'); d.className='v'+(tb==null?' noaudio':'');
+    d.id='b'+bk.n+'-v'+n;
     const mark=(n%5===0||n===1)?n:'';
     d.innerHTML='<span class="num">'+mark+'</span><div class="de">'+esc(de)+'</div>'+
       (ipa?'<div class="ipa">['+ipaHtml(esc(ipa))+']</div>':'')+
       (en?'<div class="en">'+esc(en)+'</div>':'');
-    if(tb!=null){ d.onclick=()=>tapAt(tb); flat.push({el:d,b:tb,e:te}); }
+    if(tb!=null){ d.onclick=()=>{ tapAt(tb); setHash(d.id); }; flat.push({el:d,b:tb,e:te}); }
     main.appendChild(d); verseEls[n]=d;
   });
-  window.scrollTo(0,0);
 }
 function esc(s){ return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
 
-bookSel.onchange=()=>renderBook(+bookSel.value);
+bookSel.onchange=()=>{ renderBook(+bookSel.value); window.scrollTo(0,0); };
 
 // highlight the verse under the current playback time (binary search over flat)
 let activeEl=null;
@@ -118,7 +120,7 @@ function tick(){
   if(el!==activeEl){
     if(activeEl) activeEl.classList.remove('active');
     activeEl=el;
-    if(el){ el.classList.add('active');
+    if(el){ el.classList.add('active'); setHash(el.id);
       if(follow){ const r=el.getBoundingClientRect();
         if(r.top<100||r.bottom>innerHeight-150) el.scrollIntoView({block:'center',behavior:'smooth'}); } }
   }
@@ -144,7 +146,24 @@ tIpa.onclick=()=>{ document.body.classList.toggle('hideipa'); tIpa.classList.tog
 tEn.onclick=()=>{ document.body.classList.toggle('hideen'); tEn.classList.toggle('off'); };
 tFollow.onclick=()=>{ follow=!follow; tFollow.textContent='Folgen: '+(follow?'an':'aus'); tFollow.classList.toggle('off',!follow); };
 
-renderBook(0);
+// resume from a #bNN-vNN anchor (own click, or auto-saved while listening)
+function parseHash(h){
+  const m=/^#b(\d+)-v(\d+)$/.exec(h||'');
+  if(!m) return null;
+  const i=D.findIndex(bk=>bk.n===+m[1]);
+  return i<0 ? null : {i, id:'b'+(+m[1])+'-v'+(+m[2])};
+}
+const resume=parseHash(location.hash);
+if(resume){
+  bookSel.value=resume.i; renderBook(resume.i);
+  const el=document.getElementById(resume.id);
+  if(el){
+    el.classList.add('active'); activeEl=el;
+    el.scrollIntoView({block:'center'});
+    const f=flat.find(x=>x.el===el);
+    if(f){ const go=()=>{ audio.currentTime=f.b; }; audio.readyState>=1?go():audio.addEventListener('loadedmetadata',go,{once:true}); }
+  }
+} else { renderBook(0); window.scrollTo(0,0); }
 </script>
 </body>
 </html>
